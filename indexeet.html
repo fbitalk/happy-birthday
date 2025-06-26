@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>某个人正在看着</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 星云背景 */
+        #nebula-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: 
+                radial-gradient(ellipse at 15% 40%, rgba(138, 43, 226, 0.4) 0%, rgba(75, 0, 130, 0.2) 30%, transparent 60%),
+                radial-gradient(ellipse at 85% 15%, rgba(255, 20, 147, 0.4) 0%, rgba(255, 105, 180, 0.2) 25%, transparent 55%),
+                radial-gradient(ellipse at 70% 75%, rgba(0, 191, 255, 0.35) 0%, rgba(30, 144, 255, 0.2) 30%, transparent 65%),
+                radial-gradient(ellipse at 25% 85%, rgba(255, 140, 0, 0.3) 0%, rgba(255, 69, 0, 0.15) 25%, transparent 50%),
+                radial-gradient(ellipse at 90% 60%, rgba(50, 205, 50, 0.25) 0%, rgba(127, 255, 0, 0.15) 30%, transparent 55%),
+                radial-gradient(ellipse at 50% 20%, rgba(255, 0, 255, 0.2) 0%, rgba(186, 85, 211, 0.1) 35%, transparent 60%),
+                radial-gradient(ellipse at 10% 70%, rgba(0, 255, 255, 0.25) 0%, rgba(64, 224, 208, 0.12) 25%, transparent 50%),
+                radial-gradient(ellipse at 75% 45%, rgba(255, 215, 0, 0.2) 0%, rgba(255, 165, 0, 0.1) 30%, transparent 55%),
+                #0a0a0a;
+        }
+
+        @keyframes nebulaMove {
+            0% { 
+                background: 
+                    radial-gradient(ellipse at 20% 50%, rgba(120, 0, 255, 0.3) 0%, transparent 50%),
+                    radial-gradient(ellipse at 80% 20%, rgba(255, 0, 150, 0.3) 0%, transparent 50%),
+                    radial-gradient(ellipse at 40% 80%, rgba(0, 150, 255, 0.3) 0%, transparent 50%),
+                    radial-gradient(ellipse at 60% 30%, rgba(255, 100, 0, 0.2) 0%, transparent 50%),
+                    radial-gradient(ellipse at 90% 70%, rgba(150, 255, 0, 0.2) 0%, transparent 50%),
+                    #000;
+            }
+            10% { 
+                background: 
+                    radial-gradient(ellipse at 30% 55%, rgba(120, 0, 255, 0.32) 0%, transparent 52%),
+                    radial-gradient(ellipse at 75% 25%, rgba(255, 0, 150, 0.31) 0%, transparent 51%),
+                    radial-gradient(ellipse at 45% 75%, rgba(0, 150, 255, 0.31) 0%, transparent 51%),
+                    radial-gradient(ellipse at 65% 35%, rgba(255, 100, 0, 0.21) 0%, transparent 51%),
+                    radial-gradient(ellipse at 85% 65%, rgba(150, 255, 0, 0.21) 0%, transparent 51%),
+                    #000;
+            }
+            20% { 
+                background: 
+                    radial-gradient(ellipse at 40% 60%, rgba(120, 0, 255, 0.34) 0%, transparent 54%),
+                    radial-gradient(ellipse at 70% 30%, rgba(255, 0, 150, 0.32) 0%, transparent 52%),
+                    radial-gradient(ellipse at 50% 70%, rgba(0, 150, 255, 0.32) 0%, transparent 52%),
+                    radial-gradient(ellipse at 70% 40%, rgba(255, 100, 0, 0.22) 0%, transparent 52%),
+                    radial-gradient(ellipse at 80% 60%, rgba(150, 255, 0, 0.22) 0%, transparent 52%),
+                    #000;
+            }
+            30% { 
+                background: 
+                    radial-gradient(ellipse at 50% 65%, rgba(120, 0, 255, 0.36) 0%, transparent 56%),
+                    radial-gradient(ellipse at 65% 35%, rgba(255, 0, 150, 0.33) 0%, transparent 53%),
+                    radial-gradient(ellipse at 55% 65%, rgba(0, 150, 255, 0.33) 0%, transparent 53%),
+                    radial-gradient(ellipse at 75% 45%, rgba(255, 100, 0, 0.23) 0%, transparent 53%),
+                    radial-gradient(ellipse at 75% 55%, rgba(150, 255, 0, 0.23) 0%, transparent 53%),
+                    #000;
+            }
+            40% { 
+                background: 
+                    radial-gradient(ellipse at 60% 70%, rgba(120, 0, 255, 0.38) 0%, transparent 58%),
+                    radial-gradient(ellipse at 60% 40%, rgba(255, 0, 150, 0.34) 0%, transparent 54%),
+                    radial-gradient(ellipse at 60% 60%, rgba(0, 150, 255, 0.34) 0%, transparent 54%),
+                    radial-gradient(ellipse at 80% 50%, rgba(255, 100, 0, 0.24) 0%, transparent 54%),
+                    radial-gradient(ellipse at 70% 50%, rgba(150, 255, 0, 0.24) 0%, transparent 54%),
+                    #000;
+            }
+            50% { 
+                background: 
+                    radial-gradient(ellipse at 70% 75%, rgba(120, 0, 255, 0.4) 0%, transparent 60%),
+                    radial-gradient(ellipse at 55% 45%, rgba(255, 0, 150, 0.35) 0%, transparent 55%),
+                    radial-gradient(ellipse at 65% 55%, rgba(0, 150, 255, 0.35) 0%, transparent 55%),
+                    radial-gradient(ellipse at 85% 55%, rgba(255, 100, 0, 0.25) 0%, transparent 55%),
+                    radial-gradient(ellipse at 65% 45%, rgba(150, 255, 0, 0.25) 0%, transparent 55%),
+                    #000;
+            }
+            60% { 
+                background: 
+                    radial-gradient(ellipse at 80% 80%, rgba(120, 0, 255, 0.38) 0%, transparent 58%),
+                    radial-gradient(ellipse at 50% 50%, rgba(255, 0, 150, 0.36) 0%, transparent 56%),
+                    radial-gradient(ellipse at 70% 50%, rgba(0, 150, 255, 0.36) 0%, transparent 56%),
+                    radial-gradient(ellipse at 90% 60%, rgba(255, 100, 0, 0.24) 0%, transparent 54%),
+                    radial-gradient(ellipse at 60% 40%, rgba(150, 255, 0, 0.24) 0%, transparent 54%),
+                    #000;
+            }
+            70% { 
+                background: 
+                    radial-gradient(ellipse at 90% 85%, rgba(120, 0, 255, 0.36) 0%, transparent 56%),
+                    radial-gradient(ellipse at 45% 55%, rgba(255, 0, 150, 0.37) 0%, transparent 57%),
+                    radial-gradient(ellipse at 75% 45%, rgba(0, 150, 255, 0.37) 0%, transparent 57%),
+                    radial-gradient(ellipse at 95% 65%, rgba(255, 100, 0, 0.23) 0%, transparent 53%),
+                    radial-gradient(ellipse at 55% 35%, rgba(150, 255, 0, 0.23) 0%, transparent 53%),
+                    #000;
+            }
+            80% { 
+                background: 
+                    radial-gradient(ellipse at 95% 90%, rgba(120, 0, 255, 0.34) 0%, transparent 54%),
+                    radial-gradient(ellipse at 40% 60%, rgba(255, 0, 150, 0.34) 0%, transparent 54%),
+                    radial-gradient(ellipse at 80% 40%, rgba(0, 150, 255, 0.34) 0%, transparent 54%),
+                    radial-gradient(ellipse at 90% 70%, rgba(255, 100, 0, 0.22) 0%, transparent 52%),
+                    radial-gradient(ellipse at 50% 30%, rgba(150, 255, 0, 0.22) 0%, transparent 52%),
+                    #000;
+            }
+            90% { 
+                background: 
+                    radial-gradient(ellipse at 30% 45%, rgba(120, 0, 255, 0.32) 0%, transparent 52%),
+                    radial-gradient(ellipse at 85% 25%, rgba(255, 0, 150, 0.32) 0%, transparent 52%),
+                    radial-gradient(ellipse at 85% 35%, rgba(0, 150, 255, 0.32) 0%, transparent 52%),
+                    radial-gradient(ellipse at 85% 75%, rgba(255, 100, 0, 0.21) 0%, transparent 51%),
+                    radial-gradient(ellipse at 95% 75%, rgba(150, 255, 0, 0.21) 0%, transparent 51%),
+                    #000;
+            }
+            100% { 
+                background: 
+                    radial-gradient(ellipse at 20% 50%, rgba(120, 0, 255, 0.3) 0%, transparent 50%),
+                    radial-gradient(ellipse at 80% 20%, rgba(255, 0, 150, 0.3) 0%, transparent 50%),
+                    radial-gradient(ellipse at 40% 80%, rgba(0, 150, 255, 0.3) 0%, transparent 50%),
+                    radial-gradient(ellipse at 60% 30%, rgba(255, 100, 0, 0.2) 0%, transparent 50%),
+                    radial-gradient(ellipse at 90% 70%, rgba(150, 255, 0, 0.2) 0%, transparent 50%),
+                    #000;
+            }
+        }
+
+        /* 星星 */
+        #stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* 大星星 */
+        .big-star {
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.8) 50%, transparent 100%);
+            box-shadow: 0 0 10px rgba(255,255,255,0.8);
+        }
+
+        /* 流星效果 */
+        .shooting-star {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: linear-gradient(45deg, rgba(255,255,255,1), rgba(255,255,255,0.8), transparent);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255,255,255,0.8);
+            animation: shoot 4s linear infinite;
+        }
+
+        @keyframes shoot {
+            0% {
+                transform: translateX(0) translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-400px) translateY(400px) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        /* 星云粒子 */
+        .nebula-particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+
+        /* 对话框 */
+        #dialogue-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            max-width: 90%;
+            padding: 20px;
+        }
+
+        .dialogue-box {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px 20px;
+            color: white;
+            font-size: 18px;
+            line-height: 1.6;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3), inset 0 0 30px rgba(255, 255, 255, 0.1);
+            animation: glow 3s ease-in-out infinite alternate;
+            display: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dialogue-box:hover {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.5), inset 0 0 50px rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
+        }
+
+        .dialogue-box.active {
+            display: block;
+            animation: fadeIn 0.8s ease-out, glow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes glow {
+            from { 
+                box-shadow: 0 0 30px rgba(255, 255, 255, 0.3), inset 0 0 30px rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+            to { 
+                box-shadow: 0 0 60px rgba(255, 255, 255, 0.6), 0 0 120px rgba(255, 255, 255, 0.3), inset 0 0 50px rgba(255, 255, 255, 0.2);
+                border-color: rgba(255, 255, 255, 0.4);
+            }
+        }
+
+        /* 震撼特效 */
+        .shock-effect {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(150,0,255,0.4) 30%, transparent 70%);
+            animation: shockwave 1.5s ease-out;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        @keyframes shockwave {
+            to {
+                width: 300vw;
+                height: 300vw;
+                opacity: 0;
+            }
+        }
+
+        /* 彩虹文字效果 */
+        .rainbow-text {
+            background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rainbow 4s ease-in-out infinite;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+
+        @keyframes rainbow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* 粒子爆炸效果 */
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        /* 手机适配 */
+        @media (max-width: 768px) {
+            .dialogue-box {
+                font-size: 16px;
+                padding: 20px 15px;
+            }
+            .rainbow-text {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="nebula-container"></div>
+    <div id="stars-container"></div>
+    
+    <div id="dialogue-container">
+        <div class="dialogue-box active" id="dialogue-1">
+            <p>嗨，黄子琳！👋</p>
+            <p>又来了？</p>
+        </div>
+        
+        <div class="dialogue-box" id="dialogue-2">
+            <p>不是过完生日了吗？🎂</p>
+            <p>怎么，还想再来一次？</p>
+        </div>
+        
+        <div class="dialogue-box" id="dialogue-3">
+            <p>等等...让我看看日历 📅</p>
+            <p>今天好像不是你的生日啊！</p>
+        </div>
+        
+        <div class="dialogue-box" id="dialogue-4">
+            <p>哈哈哈哈哈！😂</p>
+            <p class="rainbow-text">还想过生日，你在想屁吃？</p>
+            <p>乖乖等下一次吧！</p>
+            <p style="font-size: 14px; margin-top: 15px;">（明年见啦～）✨</p>
+        </div>
+        
+        <div class="dialogue-box" id="dialogue-5">
+            <p>明年再来吧，不用再点了。</p>
+        </div>
+        
+        <div class="dialogue-box" id="dialogue-6">
+            <p>明年再来吧，不用再点了。</p>
+        </div>
+        
+        <div class="dialogue-box" id="dialogue-7">
+            <p>明年再来吧，不用再点了。</p>
+        </div>
+        
+        <div class="dialogue-box" id="dialogue-8">
+            <p>明年再来吧，不用再点了。</p>
+        </div>
+        
+        <div class="dialogue-box" id="dialogue-9">
+            <p>明年再来吧，不用再点了。</p>
+        </div>
+        
+        <div class="dialogue-box" id="dialogue-10">
+            <p>明年再来吧，不用再点了。</p>
+        </div>
+        
+        <div class="dialogue-box" id="dialogue-11">
+            <p>真是执着呢，又是这样，那我只能再放一点东西了 😏</p>
+        </div>
+        
+        <div class="dialogue-box" id="dialogue-12">
+            <p>嫌人生太慢？下个生日太慢了？</p>
+            <p class="rainbow-text">这里你可以体验不同的人生。</p>
+        </div>
+    </div>
+
+    <script>
+        // 创建星云粒子
+        function createNebulaParticles() {
+            const container = document.getElementById('nebula-container');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'nebula-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.width = (Math.random() * 8 + 4) + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = (Math.random() * 6 + 6) + 's';
+                
+                const colors = ['rgba(138, 43, 226, 0.7)', 'rgba(255, 20, 147, 0.7)', 'rgba(0, 191, 255, 0.7)', 'rgba(255, 140, 0, 0.7)', 'rgba(50, 205, 50, 0.7)', 'rgba(255, 0, 255, 0.7)', 'rgba(0, 255, 255, 0.7)', 'rgba(255, 215, 0, 0.7)'];
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.boxShadow = `0 0 20px ${particle.style.background}`;
+                
+                container.appendChild(particle);
+            }
+        }
+
+        // 创建星空
+        function createStars() {
+            const container = document.getElementById('stars-container');
+            const starCount = 200;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = Math.random() < 0.1 ? 'star big-star' : 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                star.style.animationDuration = (Math.random() * 4 + 2) + 's';
+                container.appendChild(star);
+            }
+            
+            // 创建流星
+            setInterval(() => {
+                const shootingStar = document.createElement('div');
+                shootingStar.className = 'shooting-star';
+                shootingStar.style.left = (Math.random() * 100) + '%';
+                shootingStar.style.top = (Math.random() * 50) + '%';
+                container.appendChild(shootingStar);
+                
+                setTimeout(() => {
+                    shootingStar.remove();
+                }, 4000);
+            }, 3000);
+        }
+
+        // 对话管理
+        let currentDialogue = 1;
+        const totalDialogues = 12;
+
+        function showNextDialogue() {
+            if (currentDialogue < totalDialogues) {
+                // 创建震撼波效果
+                createShockwave();
+                
+                // 隐藏当前对话
+                document.getElementById(`dialogue-${currentDialogue}`).classList.remove('active');
+                currentDialogue++;
+                
+                // 显示下一个对话
+                setTimeout(() => {
+                    document.getElementById(`dialogue-${currentDialogue}`).classList.add('active');
+                    
+                    // 第4个对话时创建粒子爆炸
+                    if (currentDialogue === 4) {
+                        createParticleExplosion();
+                    }
+                    // 最后一个对话时跳转到游戏
+                    if (currentDialogue === totalDialogues) {
+                        setTimeout(() => {
+                            window.open('https://game.hqstar.cn', '_blank');
+                        }, 2000);
+                    }
+                }, 300);
+            }
+        }
+
+        // 震撼波效果
+        function createShockwave() {
+            const shockwave = document.createElement('div');
+            shockwave.className = 'shock-effect';
+            document.body.appendChild(shockwave);
+            
+            setTimeout(() => {
+                shockwave.remove();
+            }, 1500);
+        }
+
+        // 粒子爆炸效果
+        function createParticleExplosion() {
+            const particleCount = 60;
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = centerX + 'px';
+                particle.style.top = centerY + 'px';
+                
+                const angle = (Math.PI * 2 * i) / particleCount;
+                const velocity = Math.random() * 300 + 150;
+                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.background = color;
+                particle.style.color = color;
+                
+                document.body.appendChild(particle);
+                
+                // 动画
+                let distance = 0;
+                const animate = () => {
+                    distance += velocity / 60;
+                    particle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) rotate(${distance * 2}deg)`;
+                    particle.style.opacity = 1 - distance / 400;
+                    
+                    if (distance < 400) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        particle.remove();
+                    }
+                };
+                
+                requestAnimationFrame(animate);
+            }
+        }
+
+        // 初始化
+        createNebulaParticles();
+        createStars();
+
+        // 点击事件
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.dialogue-box')) {
+                showNextDialogue();
+            }
+        });
+
+        // 触摸事件（移动端）
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.dialogue-box')) {
+                e.preventDefault();
+                showNextDialogue();
+            }
+        });
+    </script>
+</body>
+</html>
