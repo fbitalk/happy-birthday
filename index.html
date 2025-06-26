@@ -82,6 +82,7 @@
             cursor: pointer;
             transform-style: preserve-3d;
             animation: float 3s ease-in-out infinite;
+            user-select: none;
         }
 
         @keyframes float {
@@ -139,6 +140,10 @@
             transform: rotateX(-45deg);
         }
 
+        .gift-box:active {
+            transform: scale(0.95);
+        }
+
         /* 点击提示 */
         .click-hint {
             color: white;
@@ -158,6 +163,10 @@
             display: none;
             text-align: center;
             animation: slideUp 0.8s ease-out;
+        }
+
+        .surprise-content.show {
+            display: block;
         }
 
         @keyframes slideUp {
@@ -238,6 +247,7 @@
             height: 5px;
             border-radius: 50%;
             animation: firework 1s ease-out forwards;
+            z-index: 1000;
         }
 
         @keyframes firework {
@@ -258,6 +268,7 @@
             font-size: 2rem;
             animation: floatHeart 3s ease-out forwards;
             pointer-events: none;
+            z-index: 999;
         }
 
         @keyframes floatHeart {
@@ -278,6 +289,7 @@
             height: 20px;
             background: #f39c12;
             animation: confetti 3s ease-out forwards;
+            z-index: 999;
         }
 
         @keyframes confetti {
@@ -295,6 +307,10 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -304,7 +320,7 @@
         <!-- 欢迎页面 -->
         <div class="welcome-screen" id="welcomeScreen">
             <h1 class="welcome-title">🎉 有一份神秘礼物 🎉</h1>
-            <div class="gift-box" onclick="openGift()">
+            <div class="gift-box" id="giftBox">
                 <div class="ribbon"></div>
                 <div class="lid"></div>
                 <div class="box"></div>
@@ -321,8 +337,8 @@
                     今天是你的特别日子，愿你的每一天都充满阳光和欢笑！<br>
                     愿你像我一样，永远快乐、永远可爱！
                 </p>
-                <button class="surprise-btn" id="nextBtn" onclick="nextSurprise()">🎁 打开下一个惊喜</button>
-                <button class="surprise-btn" onclick="createFireworks()">🎆 放烟花</button>
+                <button class="surprise-btn" id="nextBtn">🎁 打开下一个惊喜</button>
+                <button class="surprise-btn" id="fireworkBtn">🎆 放烟花</button>
             </div>
         </div>
     </div>
@@ -341,7 +357,7 @@
             }
         }
 
-        // 惊喜消息数组 - 修复了语法错误
+        // 惊喜消息数组
         const surprises = [
             {
                 title: "🌟 子琳是最棒的！",
@@ -425,8 +441,13 @@
 
         // 打开礼物
         function openGift() {
-            document.getElementById('welcomeScreen').style.display = 'none';
-            document.getElementById('surpriseContent').style.display = 'block';
+            console.log('礼物盒被点击了！'); // 调试信息
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            const surpriseContent = document.getElementById('surpriseContent');
+            
+            welcomeScreen.classList.add('hidden');
+            surpriseContent.classList.add('show');
+            
             createHearts();
             createConfetti();
             playSound();
@@ -436,9 +457,7 @@
         function nextSurprise() {
             currentSurprise++;
             
-            // 检查是否到了最后一个惊喜
             if (currentSurprise >= surprises.length) {
-                // 禁用按钮并更改文本
                 const nextBtn = document.getElementById('nextBtn');
                 nextBtn.disabled = true;
                 nextBtn.textContent = '🎁 惊喜已全部展示完毕';
@@ -460,7 +479,6 @@
             createHearts();
             playSound();
             
-            // 如果是最后一个惊喜，在下次点击时禁用按钮
             if (currentSurprise === surprises.length - 1) {
                 const nextBtn = document.getElementById('nextBtn');
                 nextBtn.textContent = '🎁 最后一个惊喜了';
@@ -485,7 +503,11 @@
                 
                 document.body.appendChild(firework);
                 
-                setTimeout(() => firework.remove(), 1000);
+                setTimeout(() => {
+                    if (firework.parentNode) {
+                        firework.remove();
+                    }
+                }, 1000);
             }
             playSound();
         }
@@ -501,7 +523,11 @@
                     heart.style.left = Math.random() * 100 + '%';
                     heart.style.bottom = '0';
                     document.body.appendChild(heart);
-                    setTimeout(() => heart.remove(), 3000);
+                    setTimeout(() => {
+                        if (heart.parentNode) {
+                            heart.remove();
+                        }
+                    }, 3000);
                 }, i * 200);
             }
         }
@@ -517,22 +543,49 @@
                     confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
                     confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
                     document.body.appendChild(confetti);
-                    setTimeout(() => confetti.remove(), 3000);
+                    setTimeout(() => {
+                        if (confetti.parentNode) {
+                            confetti.remove();
+                        }
+                    }, 3000);
                 }, i * 100);
             }
         }
 
         // 播放音效（模拟）
         function playSound() {
-            // 由于浏览器限制，这里只是视觉反馈
             document.body.style.filter = 'brightness(1.2)';
             setTimeout(() => {
                 document.body.style.filter = 'brightness(1)';
             }, 200);
         }
 
-        // 初始化
-        createStars();
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成');
+            
+            // 创建星星背景
+            createStars();
+            
+            // 添加事件监听器
+            const giftBox = document.getElementById('giftBox');
+            const nextBtn = document.getElementById('nextBtn');
+            const fireworkBtn = document.getElementById('fireworkBtn');
+            
+            if (giftBox) {
+                giftBox.addEventListener('click', openGift);
+                giftBox.addEventListener('touchstart', openGift);
+                console.log('礼物盒事件监听器已添加');
+            }
+            
+            if (nextBtn) {
+                nextBtn.addEventListener('click', nextSurprise);
+            }
+            
+            if (fireworkBtn) {
+                fireworkBtn.addEventListener('click', createFireworks);
+            }
+        });
 
         // 添加触摸反馈
         document.addEventListener('touchstart', function(e) {
@@ -547,8 +600,13 @@
             sparkle.style.borderRadius = '50%';
             sparkle.style.pointerEvents = 'none';
             sparkle.style.animation = 'fadeIn 0.5s ease-out forwards';
+            sparkle.style.zIndex = '9999';
             document.body.appendChild(sparkle);
-            setTimeout(() => sparkle.remove(), 500);
+            setTimeout(() => {
+                if (sparkle.parentNode) {
+                    sparkle.remove();
+                }
+            }, 500);
         });
     </script>
 </body>
