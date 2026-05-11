@@ -1,550 +1,976 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>某个人正在看着</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🎂 生日惊喜</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#FFD700;--pink:#FF6B6B;--purple:#8B5CF6;--cyan:#4ECDC4;--neon:#00FF88;
+  --bg-birthday:#0a0a1a;--bg-normal:#050510;
+  --font-game:'Segoe UI',system-ui,sans-serif;
+  --font-body:'Comic Neue','Segoe UI',cursive,sans-serif;
+}
+body{
+  font-family:var(--font-body);
+  background:var(--bg-birthday);
+  min-height:100vh;min-height:100dvh;
+  overflow:hidden;
+  position:relative;
+  color:#fff;
+  user-select:none;-webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
 
-        body {
-            background: #000;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-            position: relative;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+/* Canvas layers */
+#starCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none}
+#fxCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;pointer-events:none}
 
-        /* 星云背景 */
-        #nebula-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            background: 
-                radial-gradient(ellipse at 15% 40%, rgba(138, 43, 226, 0.4) 0%, rgba(75, 0, 130, 0.2) 30%, transparent 60%),
-                radial-gradient(ellipse at 85% 15%, rgba(255, 20, 147, 0.4) 0%, rgba(255, 105, 180, 0.2) 25%, transparent 55%),
-                radial-gradient(ellipse at 70% 75%, rgba(0, 191, 255, 0.35) 0%, rgba(30, 144, 255, 0.2) 30%, transparent 65%),
-                radial-gradient(ellipse at 25% 85%, rgba(255, 140, 0, 0.3) 0%, rgba(255, 69, 0, 0.15) 25%, transparent 50%),
-                radial-gradient(ellipse at 90% 60%, rgba(50, 205, 50, 0.25) 0%, rgba(127, 255, 0, 0.15) 30%, transparent 55%),
-                radial-gradient(ellipse at 50% 20%, rgba(255, 0, 255, 0.2) 0%, rgba(186, 85, 211, 0.1) 35%, transparent 60%),
-                radial-gradient(ellipse at 10% 70%, rgba(0, 255, 255, 0.25) 0%, rgba(64, 224, 208, 0.12) 25%, transparent 50%),
-                radial-gradient(ellipse at 75% 45%, rgba(255, 215, 0, 0.2) 0%, rgba(255, 165, 0, 0.1) 30%, transparent 55%),
-                #0a0a0a;
-        }
+/* Main container */
+#app{position:relative;z-index:10;width:100%;height:100vh;height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center}
 
-        @keyframes nebulaMove {
-            0% { 
-                background: 
-                    radial-gradient(ellipse at 20% 50%, rgba(120, 0, 255, 0.3) 0%, transparent 50%),
-                    radial-gradient(ellipse at 80% 20%, rgba(255, 0, 150, 0.3) 0%, transparent 50%),
-                    radial-gradient(ellipse at 40% 80%, rgba(0, 150, 255, 0.3) 0%, transparent 50%),
-                    radial-gradient(ellipse at 60% 30%, rgba(255, 100, 0, 0.2) 0%, transparent 50%),
-                    radial-gradient(ellipse at 90% 70%, rgba(150, 255, 0, 0.2) 0%, transparent 50%),
-                    #000;
-            }
-            10% { 
-                background: 
-                    radial-gradient(ellipse at 30% 55%, rgba(120, 0, 255, 0.32) 0%, transparent 52%),
-                    radial-gradient(ellipse at 75% 25%, rgba(255, 0, 150, 0.31) 0%, transparent 51%),
-                    radial-gradient(ellipse at 45% 75%, rgba(0, 150, 255, 0.31) 0%, transparent 51%),
-                    radial-gradient(ellipse at 65% 35%, rgba(255, 100, 0, 0.21) 0%, transparent 51%),
-                    radial-gradient(ellipse at 85% 65%, rgba(150, 255, 0, 0.21) 0%, transparent 51%),
-                    #000;
-            }
-            20% { 
-                background: 
-                    radial-gradient(ellipse at 40% 60%, rgba(120, 0, 255, 0.34) 0%, transparent 54%),
-                    radial-gradient(ellipse at 70% 30%, rgba(255, 0, 150, 0.32) 0%, transparent 52%),
-                    radial-gradient(ellipse at 50% 70%, rgba(0, 150, 255, 0.32) 0%, transparent 52%),
-                    radial-gradient(ellipse at 70% 40%, rgba(255, 100, 0, 0.22) 0%, transparent 52%),
-                    radial-gradient(ellipse at 80% 60%, rgba(150, 255, 0, 0.22) 0%, transparent 52%),
-                    #000;
-            }
-            30% { 
-                background: 
-                    radial-gradient(ellipse at 50% 65%, rgba(120, 0, 255, 0.36) 0%, transparent 56%),
-                    radial-gradient(ellipse at 65% 35%, rgba(255, 0, 150, 0.33) 0%, transparent 53%),
-                    radial-gradient(ellipse at 55% 65%, rgba(0, 150, 255, 0.33) 0%, transparent 53%),
-                    radial-gradient(ellipse at 75% 45%, rgba(255, 100, 0, 0.23) 0%, transparent 53%),
-                    radial-gradient(ellipse at 75% 55%, rgba(150, 255, 0, 0.23) 0%, transparent 53%),
-                    #000;
-            }
-            40% { 
-                background: 
-                    radial-gradient(ellipse at 60% 70%, rgba(120, 0, 255, 0.38) 0%, transparent 58%),
-                    radial-gradient(ellipse at 60% 40%, rgba(255, 0, 150, 0.34) 0%, transparent 54%),
-                    radial-gradient(ellipse at 60% 60%, rgba(0, 150, 255, 0.34) 0%, transparent 54%),
-                    radial-gradient(ellipse at 80% 50%, rgba(255, 100, 0, 0.24) 0%, transparent 54%),
-                    radial-gradient(ellipse at 70% 50%, rgba(150, 255, 0, 0.24) 0%, transparent 54%),
-                    #000;
-            }
-            50% { 
-                background: 
-                    radial-gradient(ellipse at 70% 75%, rgba(120, 0, 255, 0.4) 0%, transparent 60%),
-                    radial-gradient(ellipse at 55% 45%, rgba(255, 0, 150, 0.35) 0%, transparent 55%),
-                    radial-gradient(ellipse at 65% 55%, rgba(0, 150, 255, 0.35) 0%, transparent 55%),
-                    radial-gradient(ellipse at 85% 55%, rgba(255, 100, 0, 0.25) 0%, transparent 55%),
-                    radial-gradient(ellipse at 65% 45%, rgba(150, 255, 0, 0.25) 0%, transparent 55%),
-                    #000;
-            }
-            60% { 
-                background: 
-                    radial-gradient(ellipse at 80% 80%, rgba(120, 0, 255, 0.38) 0%, transparent 58%),
-                    radial-gradient(ellipse at 50% 50%, rgba(255, 0, 150, 0.36) 0%, transparent 56%),
-                    radial-gradient(ellipse at 70% 50%, rgba(0, 150, 255, 0.36) 0%, transparent 56%),
-                    radial-gradient(ellipse at 90% 60%, rgba(255, 100, 0, 0.24) 0%, transparent 54%),
-                    radial-gradient(ellipse at 60% 40%, rgba(150, 255, 0, 0.24) 0%, transparent 54%),
-                    #000;
-            }
-            70% { 
-                background: 
-                    radial-gradient(ellipse at 90% 85%, rgba(120, 0, 255, 0.36) 0%, transparent 56%),
-                    radial-gradient(ellipse at 45% 55%, rgba(255, 0, 150, 0.37) 0%, transparent 57%),
-                    radial-gradient(ellipse at 75% 45%, rgba(0, 150, 255, 0.37) 0%, transparent 57%),
-                    radial-gradient(ellipse at 95% 65%, rgba(255, 100, 0, 0.23) 0%, transparent 53%),
-                    radial-gradient(ellipse at 55% 35%, rgba(150, 255, 0, 0.23) 0%, transparent 53%),
-                    #000;
-            }
-            80% { 
-                background: 
-                    radial-gradient(ellipse at 95% 90%, rgba(120, 0, 255, 0.34) 0%, transparent 54%),
-                    radial-gradient(ellipse at 40% 60%, rgba(255, 0, 150, 0.34) 0%, transparent 54%),
-                    radial-gradient(ellipse at 80% 40%, rgba(0, 150, 255, 0.34) 0%, transparent 54%),
-                    radial-gradient(ellipse at 90% 70%, rgba(255, 100, 0, 0.22) 0%, transparent 52%),
-                    radial-gradient(ellipse at 50% 30%, rgba(150, 255, 0, 0.22) 0%, transparent 52%),
-                    #000;
-            }
-            90% { 
-                background: 
-                    radial-gradient(ellipse at 30% 45%, rgba(120, 0, 255, 0.32) 0%, transparent 52%),
-                    radial-gradient(ellipse at 85% 25%, rgba(255, 0, 150, 0.32) 0%, transparent 52%),
-                    radial-gradient(ellipse at 85% 35%, rgba(0, 150, 255, 0.32) 0%, transparent 52%),
-                    radial-gradient(ellipse at 85% 75%, rgba(255, 100, 0, 0.21) 0%, transparent 51%),
-                    radial-gradient(ellipse at 95% 75%, rgba(150, 255, 0, 0.21) 0%, transparent 51%),
-                    #000;
-            }
-            100% { 
-                background: 
-                    radial-gradient(ellipse at 20% 50%, rgba(120, 0, 255, 0.3) 0%, transparent 50%),
-                    radial-gradient(ellipse at 80% 20%, rgba(255, 0, 150, 0.3) 0%, transparent 50%),
-                    radial-gradient(ellipse at 40% 80%, rgba(0, 150, 255, 0.3) 0%, transparent 50%),
-                    radial-gradient(ellipse at 60% 30%, rgba(255, 100, 0, 0.2) 0%, transparent 50%),
-                    radial-gradient(ellipse at 90% 70%, rgba(150, 255, 0, 0.2) 0%, transparent 50%),
-                    #000;
-            }
-        }
+/* ===== HP Bar Style Progress ===== */
+.progress-bar{
+  position:fixed;top:12px;left:50%;transform:translateX(-50%);
+  display:flex;gap:8px;z-index:50;
+  background:rgba(0,0,0,0.6);padding:8px 16px;border-radius:20px;
+  border:2px solid rgba(255,255,255,0.15);
+  backdrop-filter:blur(10px);
+  transition:opacity 0.5s;
+}
+.progress-bar.hidden{opacity:0;pointer-events:none}
+.progress-step{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;background:rgba(255,255,255,0.1);
+  border:2px solid rgba(255,255,255,0.2);
+  transition:all 0.4s;
+}
+.progress-step.done{background:var(--gold);border-color:var(--gold);box-shadow:0 0 12px rgba(255,215,0,0.5)}
+.progress-step.active{background:var(--pink);border-color:var(--pink);box-shadow:0 0 16px rgba(255,107,107,0.6);animation:pulse-step 1s infinite}
+@keyframes pulse-step{50%{transform:scale(1.15)}}
 
-        /* 星星 */
-        #stars-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
-        }
+/* ===== Egg Counter ===== */
+.egg-counter{
+  position:fixed;top:70px;right:16px;z-index:50;
+  background:rgba(0,0,0,0.6);padding:6px 14px;border-radius:16px;
+  border:2px solid rgba(255,215,0,0.3);
+  font-size:0.9rem;display:flex;align-items:center;gap:6px;
+  transition:all 0.3s;
+}
+.egg-counter.flash{background:rgba(255,215,0,0.3);border-color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,0.5)}
 
-        .star {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: white;
-            border-radius: 50%;
-            animation: twinkle 3s infinite;
-        }
+/* ===== 3D Gift Box ===== */
+.gift-scene{perspective:600px;text-align:center}
+.gift-wrapper{position:relative;width:160px;height:180px;margin:0 auto;cursor:pointer;animation:float-gift 3s ease-in-out infinite}
+.gift-wrapper:hover{animation-play-state:paused}
+.gift-wrapper.opened{animation:none}
+@keyframes float-gift{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
 
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; transform: scale(0.5); }
-            50% { opacity: 1; transform: scale(1.2); }
-        }
+.gift-lid{
+  position:absolute;top:0;left:-8px;width:176px;height:44px;
+  background:linear-gradient(135deg,#ff8c42,#e85d3a);
+  border-radius:12px 12px 4px 4px;
+  transform-origin:right bottom;
+  transition:transform 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow:0 6px 20px rgba(0,0,0,0.4);
+  z-index:3;
+}
+.gift-wrapper.opened .gift-lid{transform:rotateX(-130deg)}
 
-        /* 大星星 */
-        .big-star {
-            width: 4px;
-            height: 4px;
-            background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.8) 50%, transparent 100%);
-            box-shadow: 0 0 10px rgba(255,255,255,0.8);
-        }
+.gift-ribbon-v{
+  position:absolute;left:50%;transform:translateX(-50%);top:18px;
+  width:28px;height:112px;background:var(--gold);
+  border-radius:4px;z-index:4;pointer-events:none;
+  box-shadow:0 0 10px rgba(255,215,0,0.4);
+}
+.gift-ribbon-h{
+  position:absolute;top:52px;left:-8px;width:176px;height:20px;
+  background:var(--gold);border-radius:4px;z-index:4;pointer-events:none;
+  box-shadow:0 0 10px rgba(255,215,0,0.4);
+}
+.gift-bow{
+  position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  width:50px;height:36px;z-index:5;pointer-events:none;
+}
+.gift-bow::before,.gift-bow::after{
+  content:'';position:absolute;width:28px;height:28px;
+  background:var(--gold);border-radius:50%;
+  box-shadow:0 0 8px rgba(255,215,0,0.5);
+}
+.gift-bow::before{left:-6px;top:0;transform:rotate(-30deg)}
+.gift-bow::after{right:-6px;top:0;transform:rotate(30deg)}
 
-        /* 流星效果 */
-        .shooting-star {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background: linear-gradient(45deg, rgba(255,255,255,1), rgba(255,255,255,0.8), transparent);
-            border-radius: 50%;
-            box-shadow: 0 0 15px rgba(255,255,255,0.8);
-            animation: shoot 4s linear infinite;
-        }
+.gift-body{
+  position:absolute;bottom:0;left:0;width:160px;height:110px;
+  background:linear-gradient(180deg,#ff6b4a,#d44a3a);
+  border-radius:8px 8px 14px 14px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.5),inset 0 4px 0 rgba(255,255,255,0.1);
+}
 
-        @keyframes shoot {
-            0% {
-                transform: translateX(0) translateY(0) scale(1);
-                opacity: 1;
-            }
-            100% {
-                transform: translateX(-400px) translateY(400px) scale(0.5);
-                opacity: 0;
-            }
-        }
+/* ===== Ticket ===== */
+.ticket-card{
+  background:linear-gradient(135deg,#1a1a2e,#2d2d44);
+  border:3px solid var(--gold);
+  border-radius:16px;padding:28px 32px;
+  text-align:center;max-width:340px;
+  box-shadow:0 0 40px rgba(255,215,0,0.3),0 20px 60px rgba(0,0,0,0.5);
+  animation:ticket-in 0.8s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes ticket-in{from{transform:scale(0) rotate(-20deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+.ticket-card h2{color:var(--gold);font-size:1.4rem;margin-bottom:12px;font-family:var(--font-game)}
+.ticket-card .emoji-big{font-size:3.5rem;margin:10px 0}
+.ticket-card .info{color:rgba(255,255,255,0.7);font-size:0.95rem;line-height:1.8}
+.ticket-card .btn{display:inline-block;margin-top:18px;padding:12px 32px;
+  background:var(--gold);color:#1a1a2e;border:none;border-radius:30px;
+  font-size:1rem;font-weight:700;cursor:pointer;
+  box-shadow:0 6px 20px rgba(255,215,0,0.4);
+  transition:all 0.2s;
+}
+.ticket-card .btn:active{transform:scale(0.95)}
 
-        /* 星云粒子 */
-        .nebula-particle {
-            position: absolute;
-            border-radius: 50%;
-            pointer-events: none;
-            animation: float 8s ease-in-out infinite;
-        }
+/* ===== Balloon Game ===== */
+.balloon{
+  position:absolute;cursor:pointer;
+  font-size:2.8rem;transition:transform 0.15s;
+  animation:float-up var(--dur) linear forwards;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+.balloon:active{transform:scale(1.3)}
+@keyframes float-up{from{transform:translateY(0) rotate(0deg)}to{transform:translateY(-110vh) rotate(var(--rot))}}
+.balloon.popped{animation:none;transform:scale(3);opacity:0;transition:all 0.3s}
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
-            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
-        }
+/* ===== Candle Game ===== */
+.candle-scene{text-align:center}
+.cake-emoji{font-size:6rem;display:block;margin-bottom:8px;animation:cake-bounce 1s ease-in-out infinite}
+@keyframes cake-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.candle-flame{display:inline-block;font-size:2rem;animation:flicker 0.15s infinite alternate}
+@keyframes flicker{from{transform:scaleX(1) scaleY(1);opacity:1}to{transform:scaleX(0.7) scaleY(1.2);opacity:0.7}}
+.candle-flame.out{animation:none;opacity:0;transform:scale(0);transition:all 0.5s}
+.blow-hint{color:rgba(255,255,255,0.6);font-size:0.9rem;margin-top:8px;animation:pulse-text 2s infinite}
+@keyframes pulse-text{50%{opacity:0.4}}
 
-        /* 对话框 */
-        #dialogue-container {
-            position: relative;
-            z-index: 10;
-            text-align: center;
-            max-width: 90%;
-            padding: 20px;
-        }
+/* ===== Cake Cut Game ===== */
+.cut-scene{position:relative;text-align:center}
+.cut-cake{font-size:6rem;display:block;cursor:pointer;position:relative}
+.cut-line{position:absolute;height:3px;background:rgba(255,255,255,0.7);transform-origin:left;border-radius:2px;box-shadow:0 0 8px rgba(255,255,255,0.5)}
+.cut-knife{position:fixed;font-size:2rem;pointer-events:none;z-index:200;transform:translate(-50%,-50%) rotate(-30deg);transition:opacity 0.3s}
 
-        .dialogue-box {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(15px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 30px 20px;
-            color: white;
-            font-size: 18px;
-            line-height: 1.6;
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3), inset 0 0 30px rgba(255, 255, 255, 0.1);
-            animation: glow 3s ease-in-out infinite alternate;
-            display: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+/* ===== Finale ===== */
+.finale-screen{text-align:center;animation:finale-in 1s ease-out}
+@keyframes finale-in{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}
+.finale-screen .big-text{font-size:2.2rem;font-weight:900;color:var(--gold);text-shadow:0 0 30px rgba(255,215,0,0.6),0 0 60px rgba(255,215,0,0.3);margin-bottom:16px}
+.finale-screen .egg-result{font-size:1.1rem;color:rgba(255,255,255,0.8);margin:12px 0}
+.finale-screen .secret{font-size:1.2rem;color:var(--pink);margin:16px 0;padding:16px;background:rgba(255,107,107,0.1);border-radius:12px;border:1px solid rgba(255,107,107,0.3)}
 
-        .dialogue-box:hover {
-            background: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 50px rgba(255, 255, 255, 0.5), inset 0 0 50px rgba(255, 255, 255, 0.2);
-            transform: scale(1.02);
-        }
+/* ===== Non-Birthday ===== */
+.nb-container{text-align:center;max-width:90vw}
+.nb-door{font-size:5rem;display:block;animation:nb-glow 2s ease-in-out infinite}
+@keyframes nb-glow{50%{filter:drop-shadow(0 0 30px rgba(0,255,136,0.6))}}
+.nb-title{font-size:1.6rem;color:var(--neon);text-shadow:0 0 20px rgba(0,255,136,0.4);margin:16px 0;font-family:var(--font-game)}
+.nb-countdown{color:rgba(255,255,255,0.6);font-size:0.95rem;margin:12px 0}
+.nb-counter{color:rgba(255,255,255,0.4);font-size:0.8rem;margin-top:8px}
 
-        .dialogue-box.active {
-            display: block;
-            animation: fadeIn 0.8s ease-out, glow 3s ease-in-out infinite alternate;
-        }
+/* ===== Dialogue Boxes ===== */
+.dialogue-box{
+  background:rgba(255,255,255,0.06);
+  backdrop-filter:blur(15px);
+  border:2px solid rgba(255,255,255,0.15);
+  border-radius:16px;padding:24px 28px;
+  color:#fff;font-size:1.05rem;line-height:1.7;
+  cursor:pointer;max-width:85vw;
+  transition:all 0.3s;
+}
+.dialogue-box:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.3)}
+.dialogue-box:active{transform:scale(0.97)}
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.8) translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
+/* ===== Chase Game ===== */
+.chase-gift{position:absolute;font-size:3rem;cursor:pointer;transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);z-index:50;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.5))}
+.chase-counter{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:50;background:rgba(0,0,0,0.7);padding:6px 16px;border-radius:20px;font-size:0.9rem;border:1px solid var(--neon)}
 
-        @keyframes glow {
-            from { 
-                box-shadow: 0 0 30px rgba(255, 255, 255, 0.3), inset 0 0 30px rgba(255, 255, 255, 0.1);
-                border-color: rgba(255, 255, 255, 0.2);
-            }
-            to { 
-                box-shadow: 0 0 60px rgba(255, 255, 255, 0.6), 0 0 120px rgba(255, 255, 255, 0.3), inset 0 0 50px rgba(255, 255, 255, 0.2);
-                border-color: rgba(255, 255, 255, 0.4);
-            }
-        }
+/* ===== Float Text (+1 effect) ===== */
+.float-text{
+  position:absolute;pointer-events:none;z-index:300;
+  font-weight:900;font-size:1.5rem;color:var(--gold);
+  animation:float-score 1.2s ease-out forwards;
+  text-shadow:0 0 10px rgba(255,215,0,0.6);
+}
+@keyframes float-score{0%{transform:translateY(0) scale(0.5);opacity:1}100%{transform:translateY(-80px) scale(1.2);opacity:0}}
 
-        /* 震撼特效 */
-        .shock-effect {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(150,0,255,0.4) 30%, transparent 70%);
-            animation: shockwave 1.5s ease-out;
-            z-index: 100;
-            pointer-events: none;
-        }
+/* ===== Screen Shake ===== */
+.shake{animation:shake 0.5s ease-out}
+@keyframes shake{0%,100%{transform:translate(0)}10%{transform:translate(-6px,4px)}30%{transform:translate(6px,-4px)}50%{transform:translate(-4px,-2px)}70%{transform:translate(4px,2px)}90%{transform:translate(-2px,4px)}}
 
-        @keyframes shockwave {
-            to {
-                width: 300vw;
-                height: 300vw;
-                opacity: 0;
-            }
-        }
+/* ===== Buttons ===== */
+.game-btn{
+  display:inline-block;padding:12px 28px;margin:8px;
+  font-size:1rem;font-weight:700;border:none;border-radius:12px;
+  cursor:pointer;font-family:var(--font-game);
+  transition:all 0.15s;color:#fff;
+  box-shadow:0 4px 0 rgba(0,0,0,0.3);
+  position:relative;top:0;
+}
+.game-btn:active{top:3px;box-shadow:0 1px 0 rgba(0,0,0,0.3)}
+.game-btn.gold{background:linear-gradient(180deg,#ffd700,#f0a500);color:#1a1a2e}
+.game-btn.pink{background:linear-gradient(180deg,#ff6b6b,#d44a4a)}
+.game-btn.purple{background:linear-gradient(180deg,#8b5cf6,#6d3ae5)}
+.game-btn.green{background:linear-gradient(180deg,#4ecdc4,#2ea89e)}
 
-        /* 彩虹文字效果 */
-        .rainbow-text {
-            background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
-            background-size: 400% 400%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: rainbow 4s ease-in-out infinite;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 0 0 20px rgba(255,255,255,0.5);
-        }
+/* ===== Typewriter ===== */
+.typewriter{overflow:hidden;white-space:nowrap;border-right:2px solid var(--neon);animation:typing 2s steps(20),blink-caret 0.5s step-end infinite;width:fit-content;margin:0 auto}
+@keyframes typing{from{width:0}to{width:100%}}
+@keyframes blink-caret{50%{border-color:transparent}}
 
-        @keyframes rainbow {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
+/* ===== Scene transitions ===== */
+.scene{display:none;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:20px}
+.scene.active{display:flex;animation:scene-in 0.5s ease-out}
+@keyframes scene-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 
-        /* 粒子爆炸效果 */
-        .particle {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            pointer-events: none;
-            box-shadow: 0 0 15px currentColor;
-        }
+/* ===== Hidden Egg ===== */
+.hidden-egg{
+  position:absolute;font-size:1.4rem;cursor:pointer;
+  opacity:0;transition:opacity 0.3s;
+  animation:egg-glimmer 2s ease-in-out infinite;
+  z-index:60;
+}
+.hidden-egg.visible{opacity:1}
+.hidden-egg.collected{animation:none;opacity:0;transform:scale(2);transition:all 0.4s}
+@keyframes egg-glimmer{0%,100%{filter:brightness(1)}50%{filter:brightness(1.8) drop-shadow(0 0 8px gold)}}
 
-        /* 手机适配 */
-        @media (max-width: 768px) {
-            .dialogue-box {
-                font-size: 16px;
-                padding: 20px 15px;
-            }
-            .rainbow-text {
-                font-size: 20px;
-            }
-        }
-    </style>
+@media (max-width:600px){
+  .gift-wrapper{width:130px;height:150px}
+  .gift-body{width:130px;height:90px}
+  .gift-lid{width:146px;height:36px}
+  .gift-ribbon-h{width:146px}
+  .gift-ribbon-v{height:92px}
+  .finale-screen .big-text{font-size:1.6rem}
+  .ticket-card{padding:20px 22px;max-width:300px}
+  .balloon{font-size:2.2rem}
+  .cake-emoji,.cut-cake{font-size:4.5rem}
+}
+</style>
 </head>
 <body>
-    <div id="nebula-container"></div>
-    <div id="stars-container"></div>
-    
-    <div id="dialogue-container">
-        <div class="dialogue-box active" id="dialogue-1">
-            <p>嗨，是谁！👋</p>
-            <p>又来了？</p>
-        </div>
-        
-        <div class="dialogue-box" id="dialogue-2">
-            <p>不是过完生日了吗？🎂</p>
-            <p>怎么，还想再来一次？</p>
-        </div>
-        
-        <div class="dialogue-box" id="dialogue-3">
-            <p>等等...让我看看日历 📅</p>
-            <p>今天好像不是你的生日啊！</p>
-        </div>
-        
-        <div class="dialogue-box" id="dialogue-4">
-            <p>哈哈哈哈哈！😂</p>
-            <p class="rainbow-text">还想过生日，你在想屁吃？</p>
-            <p>乖乖等下一次吧！</p>
-            <p style="font-size: 14px; margin-top: 15px;">（明年见啦～）✨</p>
-        </div>
-        
-        <div class="dialogue-box" id="dialogue-5">
-            <p>明年再来吧，不用再点了。</p>
-        </div>
-        
-        <div class="dialogue-box" id="dialogue-6">
-            <p>明年再来吧，不用再点了。</p>
-        </div>
-        
-        <div class="dialogue-box" id="dialogue-7">
-            <p>明年再来吧，不用再点了。</p>
-        </div>
-        
-        <div class="dialogue-box" id="dialogue-8">
-            <p>明年再来吧，不用再点了。</p>
-        </div>
-        
-        <div class="dialogue-box" id="dialogue-9">
-            <p>明年再来吧，不用再点了。</p>
-        </div>
-        
-        <div class="dialogue-box" id="dialogue-10">
-            <p>明年再来吧，不用再点了。</p>
-        </div>
-        
-        <div class="dialogue-box" id="dialogue-11">
-            <p>真是执着呢，又是这样，没意思，下次藏到看不见的地方 😏</p>
-        </div>
-        
-        <div class="dialogue-box" id="dialogue-12">
-            <p>嫌人生太慢？下个生日太慢了？</p>
-            <p class="rainbow-text">这里你可以体验不同的人生。</p>
-        </div>
+<canvas id="starCanvas"></canvas>
+<canvas id="fxCanvas"></canvas>
+
+<div id="app">
+  <!-- Progress Bar (birthday only) -->
+  <div class="progress-bar hidden" id="progressBar">
+    <span class="progress-step" id="ps1">🎁</span>
+    <span class="progress-step" id="ps2">🎈</span>
+    <span class="progress-step" id="ps3">🕯️</span>
+    <span class="progress-step" id="ps4">🎂</span>
+    <span class="progress-step" id="ps5">🎆</span>
+  </div>
+
+  <!-- Egg Counter -->
+  <div class="egg-counter hidden" id="eggCounter">🥚 <span id="eggCount">0</span>/5</div>
+
+  <!-- ===== BIRTHDAY SCENES ===== -->
+  <div class="scene" id="scene-gift">
+    <div class="gift-scene">
+      <div class="gift-wrapper" id="giftWrapper">
+        <div class="gift-bow"></div>
+        <div class="gift-lid"></div>
+        <div class="gift-ribbon-v"></div>
+        <div class="gift-ribbon-h"></div>
+        <div class="gift-body"></div>
+      </div>
+      <p style="color:rgba(255,255,255,0.7);margin-top:30px;animation:pulse-text 2s infinite">👆 点开礼物盒</p>
     </div>
+  </div>
 
-    <script>
-        // 创建星云粒子
-        function createNebulaParticles() {
-            const container = document.getElementById('nebula-container');
-            const particleCount = 30;
-            
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'nebula-particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.top = Math.random() * 100 + '%';
-                particle.style.width = (Math.random() * 8 + 4) + 'px';
-                particle.style.height = particle.style.width;
-                particle.style.animationDelay = Math.random() * 8 + 's';
-                particle.style.animationDuration = (Math.random() * 6 + 6) + 's';
-                
-                const colors = ['rgba(138, 43, 226, 0.7)', 'rgba(255, 20, 147, 0.7)', 'rgba(0, 191, 255, 0.7)', 'rgba(255, 140, 0, 0.7)', 'rgba(50, 205, 50, 0.7)', 'rgba(255, 0, 255, 0.7)', 'rgba(0, 255, 255, 0.7)', 'rgba(255, 215, 0, 0.7)'];
-                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-                particle.style.boxShadow = `0 0 20px ${particle.style.background}`;
-                
-                container.appendChild(particle);
-            }
-        }
+  <div class="scene" id="scene-ticket">
+    <div class="ticket-card">
+      <div class="emoji-big">🎪</div>
+      <h2>黄子琳的<br>生日游乐园</h2>
+      <div class="info">
+        🎫 凭此票入场<br>
+        📅 6月26日 · 仅此一天<br>
+        ✨ 祝玩得开心！
+      </div>
+      <button class="btn" id="btnEnter">🎮 进入游乐园</button>
+    </div>
+  </div>
 
-        // 创建星空
-        function createStars() {
-            const container = document.getElementById('stars-container');
-            const starCount = 200;
-            
-            for (let i = 0; i < starCount; i++) {
-                const star = document.createElement('div');
-                star.className = Math.random() < 0.1 ? 'star big-star' : 'star';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.animationDelay = Math.random() * 3 + 's';
-                star.style.animationDuration = (Math.random() * 4 + 2) + 's';
-                container.appendChild(star);
-            }
-            
-            // 创建流星
-            setInterval(() => {
-                const shootingStar = document.createElement('div');
-                shootingStar.className = 'shooting-star';
-                shootingStar.style.left = (Math.random() * 100) + '%';
-                shootingStar.style.top = (Math.random() * 50) + '%';
-                container.appendChild(shootingStar);
-                
-                setTimeout(() => {
-                    shootingStar.remove();
-                }, 4000);
-            }, 3000);
-        }
+  <div class="scene" id="scene-balloon">
+    <p style="font-size:1.3rem;color:var(--gold);text-shadow:0 0 15px rgba(255,215,0,0.4);margin-bottom:10px">🎈 戳破所有气球！</p>
+    <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:16px">每个气球里都藏着祝福</p>
+    <div id="balloonContainer" style="position:relative;width:100%;height:70vh"></div>
+  </div>
 
-        // 对话管理
-        let currentDialogue = 1;
-        const totalDialogues = 12;
+  <div class="scene" id="scene-candle">
+    <div class="candle-scene">
+      <p style="font-size:1.2rem;margin-bottom:16px">🕯️ 吹灭蜡烛吧！</p>
+      <span class="cake-emoji">🎂</span>
+      <span class="candle-flame" id="candleFlame">🔥</span>
+      <p class="blow-hint" id="blowHint">💨 快速点击火焰吹灭它！</p>
+      <div style="margin-top:16px">
+        <span id="blowMeter" style="display:inline-block;width:120px;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden">
+          <span id="blowFill" style="display:block;height:100%;width:0%;background:var(--cyan);border-radius:4px;transition:width 0.3s"></span>
+        </span>
+      </div>
+    </div>
+  </div>
 
-        function showNextDialogue() {
-            if (currentDialogue < totalDialogues) {
-                // 创建震撼波效果
-                createShockwave();
-                
-                // 隐藏当前对话
-                document.getElementById(`dialogue-${currentDialogue}`).classList.remove('active');
-                currentDialogue++;
-                
-                // 显示下一个对话
-                setTimeout(() => {
-                    document.getElementById(`dialogue-${currentDialogue}`).classList.add('active');
-                    
-                    // 第4个对话时创建粒子爆炸
-                    if (currentDialogue === 4) {
-                        createParticleExplosion();
-                    }
-                    // 最后一个对话时跳转到游戏
-                    if (currentDialogue === totalDialogues) {
-                        setTimeout(() => {
-                            window.open('https://game.hqstar.cn', '_blank');
-                        }, 2000);
-                    }
-                }, 300);
-            }
-        }
+  <div class="scene" id="scene-cakecut">
+    <div class="cut-scene">
+      <p style="font-size:1.2rem;margin-bottom:16px">🔪 切开蛋糕！</p>
+      <div style="position:relative;display:inline-block" id="cakeCutArea">
+        <span class="cut-cake" id="cutCake">🎂</span>
+        <div class="cut-line" id="cutLine" style="display:none"></div>
+      </div>
+      <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:12px">在蛋糕上划一刀</p>
+    </div>
+  </div>
 
-        // 震撼波效果
-        function createShockwave() {
-            const shockwave = document.createElement('div');
-            shockwave.className = 'shock-effect';
-            document.body.appendChild(shockwave);
-            
-            setTimeout(() => {
-                shockwave.remove();
-            }, 1500);
-        }
+  <div class="scene" id="scene-finale">
+    <div class="finale-screen">
+      <p style="font-size:4rem;margin-bottom:8px">🎉</p>
+      <div class="big-text">生日快乐<br>黄子琳！</div>
+      <div class="egg-result" id="finaleEggs"></div>
+      <div id="secretEnding" style="display:none">
+        <div class="secret" id="secretMessage"></div>
+      </div>
+      <p style="color:rgba(255,255,255,0.5);margin:16px 0">🎪 游乐园打烊了，明年再见！</p>
+      <button class="game-btn gold" onclick="location.reload()">🔄 再来一次</button>
+    </div>
+  </div>
 
-        // 粒子爆炸效果
-        function createParticleExplosion() {
-            const particleCount = 60;
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = centerX + 'px';
-                particle.style.top = centerY + 'px';
-                
-                const angle = (Math.PI * 2 * i) / particleCount;
-                const velocity = Math.random() * 300 + 150;
-                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                particle.style.background = color;
-                particle.style.color = color;
-                
-                document.body.appendChild(particle);
-                
-                // 动画
-                let distance = 0;
-                const animate = () => {
-                    distance += velocity / 60;
-                    particle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) rotate(${distance * 2}deg)`;
-                    particle.style.opacity = 1 - distance / 400;
-                    
-                    if (distance < 400) {
-                        requestAnimationFrame(animate);
-                    } else {
-                        particle.remove();
-                    }
-                };
-                
-                requestAnimationFrame(animate);
-            }
-        }
+  <!-- ===== NON-BIRTHDAY SCENES ===== -->
+  <div class="scene" id="scene-nb-main">
+    <div class="nb-container">
+      <span class="nb-door">🚪🔒</span>
+      <div class="nb-title" id="nbTitle"></div>
+      <div class="nb-countdown" id="nbCountdown"></div>
+      <div class="nb-counter" id="nbCounter"></div>
+      <div style="margin-top:20px">
+        <button class="game-btn green" id="btnChaseGame">🎁 玩个小游戏？</button>
+      </div>
+    </div>
+  </div>
 
-        // 初始化
-        createNebulaParticles();
-        createStars();
+  <div class="scene" id="scene-nb-dialogue">
+    <div class="dialogue-box" id="dialogueBox"></div>
+    <p style="color:rgba(255,255,255,0.3);font-size:0.8rem;margin-top:16px">点击对话框继续</p>
+  </div>
 
-        // 点击事件
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.dialogue-box')) {
-                showNextDialogue();
-            }
-        });
+  <div class="scene" id="scene-nb-chase">
+    <div class="chase-counter" id="chaseCounter">点击次数: 0</div>
+    <p style="color:rgba(255,255,255,0.6);font-size:0.9rem;text-align:center;margin-top:60vh">👆 抓住那个乱跑的礼物盒！</p>
+    <span class="chase-gift" id="chaseGift">🎁</span>
+  </div>
+</div>
 
-        // 触摸事件（移动端）
-        document.addEventListener('touchstart', (e) => {
-            if (e.target.closest('.dialogue-box')) {
-                e.preventDefault();
-                showNextDialogue();
-            }
-        });
-    </script>
+<!-- Knife for cake cutting -->
+<span class="cut-knife" id="cutKnife" style="display:none">🔪</span>
+
+<script>
+// ============ CONFIGURATION ============
+const CONFIG = {
+  birthday: { month: 6, day: 26 },
+  name: '黄子琳',
+  totalEggs: 5,
+  balloonCount: 12,
+  candleClicksNeeded: 15,
+  chaseWinClicks: 20,
+};
+
+// ============ STATE ============
+const state = {
+  isBirthday: false,
+  scene: '', // gift | ticket | balloon | candle | cakecut | finale | nb-main | nb-dialogue | nb-chase
+  eggsFound: 0,
+  eggsCollected: new Set(),
+  balloonsPopped: 0,
+  candleProgress: 0,
+  cakeCutDone: false,
+  visitorCount: 0,
+  chaseClicks: 0,
+  nbDialogueIdx: 0,
+};
+
+// ============ DATE DETECTION ============
+const params = new URLSearchParams(window.location.search);
+const now = new Date();
+state.isBirthday = params.has('birthday') ||
+  (now.getMonth() + 1 === CONFIG.birthday.month && now.getDate() === CONFIG.birthday.day);
+
+// ============ DOM REFS ============
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+const app = $('#app');
+const starCanvas = $('#starCanvas');
+const starCtx = starCanvas.getContext('2d');
+const fxCanvas = $('#fxCanvas');
+const fxCtx = fxCanvas.getContext('2d');
+const cutKnife = $('#cutKnife');
+
+// ============ CANVAS SETUP ============
+function resizeCanvases() {
+  const w = window.innerWidth, h = window.innerHeight;
+  [starCanvas, fxCanvas].forEach(c => { c.width = w; c.height = h; });
+}
+window.addEventListener('resize', resizeCanvases);
+resizeCanvases();
+
+// ============ STARFIELD ============
+const stars = [];
+for (let i = 0; i < 180; i++) {
+  stars.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    r: Math.random() * 1.8 + 0.5,
+    speed: Math.random() * 0.3 + 0.1,
+    twinkle: Math.random() * Math.PI * 2,
+    twinkleSpeed: Math.random() * 0.02 + 0.005,
+    hue: state.isBirthday ? Math.random() < 0.2 ? 45 : 260 + Math.random() * 40 : 160 + Math.random() * 40,
+  });
+}
+
+function drawStars() {
+  const { width, height } = starCanvas;
+  starCtx.clearRect(0, 0, width, height);
+  for (const s of stars) {
+    s.twinkle += s.twinkleSpeed;
+    const alpha = 0.3 + Math.sin(s.twinkle) * 0.4;
+    s.y += s.speed;
+    if (s.y > height + 5) { s.y = -5; s.x = Math.random() * width; }
+    starCtx.beginPath();
+    starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    starCtx.fillStyle = `hsla(${s.hue},80%,70%,${alpha})`;
+    starCtx.fill();
+    if (s.r > 1.3) {
+      starCtx.beginPath();
+      starCtx.arc(s.x, s.y, s.r * 2.5, 0, Math.PI * 2);
+      starCtx.fillStyle = `hsla(${s.hue},80%,70%,${alpha * 0.15})`;
+      starCtx.fill();
+    }
+  }
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+
+// ============ FX PARTICLES ============
+const fxParticles = [];
+
+function spawnParticles(x, y, count, opts = {}) {
+  const { colors = ['#ffd700','#ff6b6b','#4ecdc4','#fff','#8b5cf6'], speed = 6, life = 60, size = 4 } = opts;
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
+    const vel = speed * (0.4 + Math.random() * 0.6);
+    fxParticles.push({
+      x, y, vx: Math.cos(angle) * vel, vy: Math.sin(angle) * vel,
+      life, maxLife: life, size: size * (0.5 + Math.random()),
+      color: colors[Math.floor(Math.random() * colors.length)],
+      gravity: opts.gravity ?? 0.08,
+    });
+  }
+}
+
+function spawnFirework(x, y) {
+  const hue = Math.random() * 360;
+  const count = 40 + Math.floor(Math.random() * 30);
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count;
+    const vel = 3 + Math.random() * 7;
+    fxParticles.push({
+      x, y, vx: Math.cos(angle) * vel, vy: Math.sin(angle) * vel,
+      life: 50 + Math.random() * 40, maxLife: 90,
+      size: 2 + Math.random() * 3,
+      color: `hsl(${hue + Math.random() * 40 - 20},90%,${55 + Math.random() * 30}%)`,
+      gravity: 0.04,
+    });
+  }
+}
+
+function spawnConfetti(count = 40) {
+  for (let i = 0; i < count; i++) {
+    fxParticles.push({
+      x: Math.random() * window.innerWidth,
+      y: -20 - Math.random() * 200,
+      vx: (Math.random() - 0.5) * 3,
+      vy: 2 + Math.random() * 5,
+      life: 120 + Math.random() * 100, maxLife: 220,
+      size: 6 + Math.random() * 8,
+      color: `hsl(${Math.random() * 360},85%,${50 + Math.random() * 30}%)`,
+      gravity: 0.03,
+      rot: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 15,
+    });
+  }
+}
+
+function drawFX() {
+  const { width, height } = fxCanvas;
+  fxCtx.clearRect(0, 0, width, height);
+  for (let i = fxParticles.length - 1; i >= 0; i--) {
+    const p = fxParticles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += p.gravity;
+    p.life--;
+    if (p.life <= 0) { fxParticles.splice(i, 1); continue; }
+    const alpha = p.life / p.maxLife;
+    fxCtx.save();
+    fxCtx.globalAlpha = alpha;
+    if (p.rot !== undefined) {
+      fxCtx.translate(p.x, p.y);
+      p.rot += p.rotSpeed;
+      fxCtx.rotate(p.rot * Math.PI / 180);
+      fxCtx.fillStyle = p.color;
+      fxCtx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+    } else {
+      fxCtx.beginPath();
+      fxCtx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+      fxCtx.fillStyle = p.color;
+      fxCtx.fill();
+    }
+    fxCtx.restore();
+  }
+  requestAnimationFrame(drawFX);
+}
+drawFX();
+
+// ============ AUDIO SYSTEM ============
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playBeep(freq, type, duration, vol = 0.08) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type; osc.frequency.setValueAtTime(freq, t);
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(t); osc.stop(t + duration);
+}
+function sfxPop() { playBeep(600, 'sine', 0.1, 0.06); }
+function sfxClick() { playBeep(800, 'square', 0.08, 0.05); }
+function sfxDing() { playBeep(1200, 'sine', 0.2, 0.08); playBeep(1600, 'sine', 0.15, 0.05); }
+function sfxBoom() { playBeep(80, 'triangle', 0.3, 0.15); }
+function sfxWin() {
+  [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playBeep(f, 'sine', 0.25, 0.1), i * 100));
+}
+function sfxEgg() { playBeep(1800, 'sine', 0.15, 0.08); playBeep(2400, 'sine', 0.12, 0.06); }
+
+// ============ UTILITIES ============
+function showScene(name) {
+  state.scene = name;
+  $$('.scene').forEach(s => s.classList.remove('active'));
+  const el = $(`#scene-${name}`);
+  if (el) el.classList.add('active');
+  updateProgressBar();
+  updateEggCounter();
+}
+
+function updateProgressBar() {
+  const bar = $('#progressBar');
+  if (!state.isBirthday) { bar.classList.add('hidden'); return; }
+  // Map scene → progress (0=none, 1=gift opened, 2=ballooning, 3=candle, 4=cake, 5=finale)
+  const stageMap = { gift:0, ticket:1, balloon:2, candle:3, cakecut:4, finale:5 };
+  const stage = stageMap[state.scene] ?? -1;
+  bar.classList.toggle('hidden', stage < 1);
+  ['ps1','ps2','ps3','ps4','ps5'].forEach((id, i) => {
+    const el = $(`#${id}`);
+    el.classList.remove('done','active');
+    if (i + 1 < stage) el.classList.add('done');
+    if (i + 1 === stage) el.classList.add('active');
+  });
+}
+
+function updateEggCounter() {
+  const el = $('#eggCounter');
+  const show = state.isBirthday && ['ticket','balloon','candle','cakecut'].includes(state.scene);
+  el.classList.toggle('hidden', !show);
+  $('#eggCount').textContent = state.eggsFound;
+}
+
+function shakeScreen() {
+  app.classList.add('shake');
+  setTimeout(() => app.classList.remove('shake'), 500);
+}
+
+function floatText(x, y, text) {
+  const el = document.createElement('div');
+  el.className = 'float-text';
+  el.textContent = text;
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+
+function spawnHiddenEgg(x, y, id) {
+  if (state.eggsCollected.has(id)) return;
+  const egg = document.createElement('span');
+  egg.className = 'hidden-egg visible';
+  egg.textContent = '🥚';
+  egg.style.left = x + 'px'; egg.style.top = y + 'px';
+  egg.style.position = 'fixed';
+  egg.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (state.eggsCollected.has(id)) return;
+    state.eggsCollected.add(id);
+    state.eggsFound++;
+    egg.classList.add('collected');
+    sfxEgg();
+    floatText(x, y, '+1 🥚');
+    updateEggCounter();
+    const counter = $('#eggCounter');
+    counter.classList.add('flash');
+    setTimeout(() => counter.classList.remove('flash'), 300);
+    setTimeout(() => egg.remove(), 400);
+  });
+  document.body.appendChild(egg);
+  setTimeout(() => { if (!state.eggsCollected.has(id)) egg.remove(); }, 8000);
+}
+
+function hideAllEggs() {
+  $$('.hidden-egg').forEach(e => e.remove());
+}
+
+// ============ BIRTHDAY: STAGE 1 - GIFT ============
+function initGiftScene() {
+  showScene('gift');
+  const wrapper = $('#giftWrapper');
+  wrapper.classList.remove('opened');
+  wrapper.onclick = () => {
+    if (wrapper.classList.contains('opened')) return;
+    initAudio();
+    wrapper.classList.add('opened');
+    sfxBoom();
+    const rect = wrapper.getBoundingClientRect();
+    spawnParticles(rect.left + rect.width/2, rect.top + rect.height/3, 40, { speed: 10, life: 70 });
+    shakeScreen();
+    setTimeout(() => {
+      spawnHiddenEgg(window.innerWidth * 0.15, window.innerHeight * 0.3, 'egg1');
+      showScene('ticket');
+    }, 800);
+  };
+}
+
+// ============ BIRTHDAY: TICKET ============
+function initTicketScene() {
+  $('#btnEnter').onclick = () => {
+    sfxClick();
+    spawnHiddenEgg(window.innerWidth * 0.8, window.innerHeight * 0.5, 'egg2');
+    initBalloonScene();
+  };
+}
+
+// ============ BIRTHDAY: STAGE 2A - BALLOONS ============
+const balloonMessages = ['快乐!','幸福!','健康!','好运!','美丽!','聪明!','发财!','如意!','平安!','甜蜜!','自由!','闪耀!'];
+function initBalloonScene() {
+  showScene('balloon');
+  state.balloonsPopped = 0;
+  const container = $('#balloonContainer');
+  container.innerHTML = '';
+
+  const balloonEmojis = ['🎈','🎈','🎈','🎈','🎈','🎈','🎈','🎈','🎈','🎈','💝','💖'];
+
+  function createBalloon(i) {
+    const b = document.createElement('span');
+    b.className = 'balloon';
+    b.textContent = balloonEmojis[i];
+    b.style.left = (5 + Math.random() * 85) + '%';
+    b.style.top = '100%';
+    b.style.setProperty('--dur', (4 + Math.random() * 5) + 's');
+    b.style.setProperty('--rot', (Math.random() - 0.5) * 30 + 'deg');
+    b.style.animationDelay = Math.random() * 2 + 's';
+    b.addEventListener('click', (e) => {
+      if (b.classList.contains('popped')) return;
+      initAudio();
+      b.classList.add('popped');
+      sfxPop();
+      const rect = b.getBoundingClientRect();
+      spawnParticles(rect.left + rect.width/2, rect.top + rect.height/2, 8, { colors: ['#ff6b6b','#ffd700','#4ecdc4','#ff9ff3','#54a0ff'], speed: 5, life: 50 });
+      floatText(rect.left, rect.top, balloonMessages[i] || '🎉');
+      state.balloonsPopped++;
+      if (state.balloonsPopped >= CONFIG.balloonCount) {
+        sfxWin();
+        spawnConfetti(30);
+        spawnHiddenEgg(window.innerWidth * 0.5, window.innerHeight * 0.2, 'egg3');
+        setTimeout(() => initCandleScene(), 1200);
+      }
+    });
+    container.appendChild(b);
+    setTimeout(() => { if (!b.classList.contains('popped') && b.parentNode) b.remove(); }, 8000);
+  }
+
+  for (let i = 0; i < CONFIG.balloonCount; i++) {
+    setTimeout(() => createBalloon(i), i * 300);
+  }
+}
+
+// ============ BIRTHDAY: STAGE 2B - CANDLE ============
+function initCandleScene() {
+  showScene('candle');
+  hideAllEggs();
+  state.candleProgress = 0;
+  const flame = $('#candleFlame');
+  const fill = $('#blowFill');
+  const hint = $('#blowHint');
+  flame.classList.remove('out');
+  fill.style.width = '0%';
+  hint.textContent = '💨 快速点击火焰吹灭它！';
+
+  function blowClick(e) {
+    if (state.candleProgress >= CONFIG.candleClicksNeeded) return;
+    initAudio();
+    state.candleProgress++;
+    const pct = (state.candleProgress / CONFIG.candleClicksNeeded) * 100;
+    fill.style.width = pct + '%';
+    sfxPop();
+    const rect = flame.getBoundingClientRect();
+    spawnParticles(rect.left + rect.width/2, rect.top, 2, { colors: ['#ffaa00','#ff6600','#ff0000'], speed: 3, life: 30 });
+    hint.textContent = ['加油吹！','快灭了！','继续！','就差一点！','呼呼呼~'][Math.min(Math.floor(state.candleProgress / 3), 4)];
+
+    if (state.candleProgress >= CONFIG.candleClicksNeeded) {
+      flame.classList.add('out');
+      hint.textContent = '🎉 蜡烛灭了！';
+      sfxWin();
+      spawnParticles(window.innerWidth/2, window.innerHeight/2, 30, { speed: 8, life: 60 });
+      spawnHiddenEgg(window.innerWidth * 0.2, window.innerHeight * 0.7, 'egg4');
+      setTimeout(() => initCakeCutScene(), 1500);
+    }
+  }
+  flame.onclick = blowClick;
+  flame.style.cursor = 'pointer';
+}
+
+// ============ BIRTHDAY: STAGE 2C - CAKE CUT ============
+function initCakeCutScene() {
+  showScene('cakecut');
+  hideAllEggs();
+  state.cakeCutDone = false;
+  const cakeArea = $('#cakeCutArea');
+  const cutLine = $('#cutLine');
+  cutLine.style.display = 'none';
+  state.cakeCutDone = false;
+
+  let cutting = false;
+  let startX = 0, startY = 0;
+
+  function getPos(e) {
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX, y: t.clientY };
+  }
+
+  cakeArea.onpointerdown = (e) => {
+    if (state.cakeCutDone) return;
+    initAudio();
+    cutting = true;
+    const cakeRect = cakeArea.getBoundingClientRect();
+    const pos = getPos(e);
+    startX = pos.x - cakeRect.left;
+    startY = pos.y - cakeRect.top;
+    cutKnife.style.display = 'block';
+    cutKnife.style.left = pos.x + 'px';
+    cutKnife.style.top = pos.y + 'px';
+  };
+
+  window.addEventListener('pointermove', (e) => {
+    if (!cutting || state.cakeCutDone) return;
+    const pos = getPos(e);
+    cutKnife.style.left = pos.x + 'px';
+    cutKnife.style.top = pos.y + 'px';
+  });
+
+  window.addEventListener('pointerup', (e) => {
+    if (!cutting || state.cakeCutDone) return;
+    cutting = false;
+    cutKnife.style.display = 'none';
+    state.cakeCutDone = true;
+
+    const cakeRect = cakeArea.getBoundingClientRect();
+    const pos = getPos(e);
+    const endX = pos.x - cakeRect.left;
+    const endY = pos.y - cakeRect.top;
+
+    cutLine.style.display = 'block';
+    cutLine.style.left = startX + 'px';
+    cutLine.style.top = startY + 'px';
+    const length = Math.sqrt((endX-startX)**2 + (endY-startY)**2);
+    cutLine.style.width = length + 'px';
+    const angle = Math.atan2(endY-startY, endX-startX) * 180 / Math.PI;
+    cutLine.style.transform = `rotate(${angle}deg)`;
+
+    sfxWin();
+    const cx = cakeRect.left + cakeRect.width/2;
+    const cy = cakeRect.top + cakeRect.height/2;
+    spawnParticles(cx, cy, 50, { speed: 10, life: 80 });
+    spawnConfetti(50);
+    spawnHiddenEgg(window.innerWidth * 0.65, window.innerHeight * 0.4, 'egg5');
+    shakeScreen();
+    setTimeout(() => initFinaleScene(), 2000);
+  });
+}
+
+// ============ BIRTHDAY: STAGE 3 - FINALE ============
+function initFinaleScene() {
+  showScene('finale');
+  hideAllEggs();
+  cutKnife.style.display = 'none';
+
+  $('#finaleEggs').textContent = `你找到了 ${state.eggsFound}/${CONFIG.totalEggs} 个隐藏彩蛋！`;
+
+  if (state.eggsFound >= CONFIG.totalEggs) {
+    $('#secretEnding').style.display = 'block';
+    $('#secretMessage').innerHTML = '🌟 <strong>隐藏结局解锁！</strong> 🌟<br>你是一个特别细心的人！<br>这份用心值得被看见——<br>愿你的每一天都像今天一样被认真对待 ❤️';
+  }
+
+  // Fireworks show
+  const fw = () => {
+    const x = Math.random() * window.innerWidth * 0.8 + window.innerWidth * 0.1;
+    const y = Math.random() * window.innerHeight * 0.5 + window.innerHeight * 0.1;
+    spawnFirework(x, y);
+  };
+  for (let i = 0; i < 6; i++) setTimeout(fw, i * 600);
+  setTimeout(() => { for (let i = 0; i < 4; i++) setTimeout(fw, i * 500); }, 4000);
+
+  sfxWin();
+  shakeScreen();
+  spawnConfetti(60);
+}
+
+// ============ NON-BIRTHDAY ============
+const nbDialogues = [
+  '咦？今天好像不是你的生日哦~ 🤔',
+  '想提前感受生日气氛？做梦！😏',
+  '不过既然来了...陪我玩会儿？',
+  '说实话，你是不是记错日子了？📅',
+  '上次来的人也以为今天是生日...他也错了 😂',
+  '行吧行吧，告诉你一个秘密：<br>6月26日，记住了吗？',
+  '你怎么还在点？真有耐心...',
+  '好吧，看你这么执着，<br>送你一个小游戏玩玩~ 🎮',
+];
+
+function initNonBirthday() {
+  const daysUntil = calcDaysUntilBirthday();
+  showScene('nb-main');
+
+  // Typewriter title
+  const title = $('#nbTitle');
+  title.style.animation = 'none';
+  title.offsetHeight;
+  title.style.animation = 'typing 2s steps(20), blink-caret 0.5s step-end 12';
+  title.textContent = '今天不是你的生日...';
+
+  // Countdown
+  $('#nbCountdown').innerHTML = `距离黄子琳的生日还有<br><span style="font-size:1.8rem;color:var(--neon);font-weight:900">${daysUntil}</span> 天`;
+
+  // Visitor counter
+  state.visitorCount = parseInt(localStorage.getItem('bd_visitors') || '0');
+  state.visitorCount++;
+  localStorage.setItem('bd_visitors', state.visitorCount);
+  $('#nbCounter').textContent = `你是第 ${state.visitorCount} 个被骗（划掉）提前来的人`;
+
+  // Chase game button
+  $('#btnChaseGame').onclick = () => {
+    initAudio();
+    sfxClick();
+    initDialogueScene();
+  };
+}
+
+function calcDaysUntilBirthday() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const bday = new Date(today.getFullYear(), CONFIG.birthday.month - 1, CONFIG.birthday.day);
+  if (today > bday) bday.setFullYear(bday.getFullYear() + 1);
+  return Math.ceil((bday - today) / (1000 * 60 * 60 * 24));
+}
+
+function initDialogueScene() {
+  showScene('nb-dialogue');
+  state.nbDialogueIdx = 0;
+  const box = $('#dialogueBox');
+  box.innerHTML = nbDialogues[0];
+  box.onclick = () => {
+    initAudio();
+    sfxClick();
+    state.nbDialogueIdx++;
+    if (state.nbDialogueIdx >= nbDialogues.length) {
+      initChaseGame();
+    } else {
+      box.innerHTML = nbDialogues[state.nbDialogueIdx];
+      box.style.animation = 'none';
+      box.offsetHeight;
+      box.style.animation = 'scene-in 0.4s ease-out';
+    }
+  };
+}
+
+function initChaseGame() {
+  showScene('nb-chase');
+  state.chaseClicks = 0;
+  const gift = $('#chaseGift');
+  const counter = $('#chaseCounter');
+  counter.textContent = '点击次数: 0';
+  gift.style.left = '50%'; gift.style.top = '40%';
+
+  const chaseMessages = [
+    '差一点！','想得美！','手速不行啊~','快了快了！','哈哈笨蛋！',
+    '还差得远呢！','啧啧啧...','认真点行吗？','你是在用脚吗？','嘿嘿~',
+  ];
+
+  gift.onclick = (e) => {
+    e.stopPropagation();
+    initAudio();
+    state.chaseClicks++;
+    counter.textContent = `点击次数: ${state.chaseClicks}`;
+    sfxPop();
+
+    // Jump gift to random position
+    const margin = 60;
+    const newX = margin + Math.random() * (window.innerWidth - margin * 2 - 60);
+    const newY = margin + Math.random() * (window.innerHeight - margin * 2 - 60);
+    gift.style.left = newX + 'px';
+    gift.style.top = newY + 'px';
+
+    // Show funny message
+    const rect = gift.getBoundingClientRect();
+    if (state.chaseClicks < CONFIG.chaseWinClicks) {
+      floatText(rect.left, rect.top - 20, chaseMessages[Math.floor(Math.random() * chaseMessages.length)]);
+    }
+
+    if (state.chaseClicks >= CONFIG.chaseWinClicks) {
+      floatText(rect.left, rect.top - 20, '好吧，你赢了！但...');
+      setTimeout(() => {
+        floatText(window.innerWidth/2 - 60, window.innerHeight/2, '还是没！有！生！日！😂');
+        sfxWin();
+        spawnConfetti(20);
+      }, 800);
+      counter.textContent = '🎉 你赢了！（但这毫无意义）';
+    }
+  };
+
+  // Auto-move gift every 2s if not clicked
+  let autoMove = setInterval(() => {
+    if (state.chaseClicks >= CONFIG.chaseWinClicks) { clearInterval(autoMove); return; }
+    const margin = 60;
+    gift.style.left = (margin + Math.random() * (window.innerWidth - margin * 2 - 60)) + 'px';
+    gift.style.top = (margin + Math.random() * (window.innerHeight - margin * 2 - 60)) + 'px';
+  }, 2000);
+}
+
+// ============ STARTUP ============
+function init() {
+  if (state.isBirthday) {
+    initGiftScene();
+  } else {
+    initNonBirthday();
+  }
+}
+
+// Global click for audio init
+document.addEventListener('click', initAudio, { once: true });
+document.addEventListener('touchstart', initAudio, { once: true });
+
+init();
+</script>
 </body>
 </html>
