@@ -329,7 +329,7 @@ body{
   <div class="scene" id="scene-finale">
     <div class="finale-screen">
       <p style="font-size:4rem;margin-bottom:8px">🎉</p>
-      <div class="big-text">生日快乐<br>黄子琳！</div>
+      <div class="big-text">生日快乐<br>地球人！</div>
       <div class="egg-result" id="finaleEggs"></div>
       <div id="secretEnding" style="display:none">
         <div class="secret" id="secretMessage"></div>
@@ -860,7 +860,7 @@ function initNonBirthday() {
   title.textContent = '今天不是你的生日...';
 
   // Countdown
-  $('#nbCountdown').innerHTML = `距离黄子琳的生日还有<br><span style="font-size:1.8rem;color:var(--neon);font-weight:900">${daysUntil}</span> 天`;
+  $('#nbCountdown').innerHTML = `距离地球人的生日还有<br><span style="font-size:1.8rem;color:var(--neon);font-weight:900">${daysUntil}</span> 天`;
 
   // Visitor counter
   state.visitorCount = parseInt(localStorage.getItem('bd_visitors') || '0');
